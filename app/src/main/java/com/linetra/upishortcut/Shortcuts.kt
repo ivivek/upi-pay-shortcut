@@ -54,6 +54,17 @@ object Shortcuts {
         ShortcutManagerCompat.disableShortcuts(context, ids, "Merchant removed from UPI Shortcuts")
     }
 
+    /**
+     * Long-press menu on the app icon: most-used merchants first, topped up with the rest by name
+     * so new users see something before their first payment. Call while in the foreground
+     * (dynamic-shortcut updates are rate-limited in the background).
+     */
+    fun publishDynamic(context: Context, mostUsed: List<Merchant>, all: List<Merchant>) {
+        val limit = minOf(4, ShortcutManagerCompat.getMaxShortcutCountPerActivity(context))
+        val picks = (mostUsed + all).distinctBy { it.id }.take(limit)
+        ShortcutManagerCompat.setDynamicShortcuts(context, picks.mapIndexed { rank, m -> build(context, m, rank) })
+    }
+
     /** Disables shortcuts pinned by the POC build (ids not in the `m-<id>` scheme). */
     fun disableLegacy(context: Context) {
         val legacy = ShortcutManagerCompat.getShortcuts(context, ShortcutManagerCompat.FLAG_MATCH_PINNED)
@@ -64,7 +75,7 @@ object Shortcuts {
         }
     }
 
-    fun build(context: Context, merchant: Merchant): ShortcutInfoCompat {
+    fun build(context: Context, merchant: Merchant, rank: Int = 0): ShortcutInfoCompat {
         val intent = Intent(context, PayActivity::class.java).apply {
             action = Intent.ACTION_VIEW // shortcut intents must have an action
             putExtra(PayActivity.EXTRA_MERCHANT_ID, merchant.id)
@@ -74,6 +85,7 @@ object Shortcuts {
             .setLongLabel("Pay ${merchant.name}")
             .setIcon(IconCompat.createWithAdaptiveBitmap(letterIcon(context, merchant)))
             .setIntent(intent)
+            .setRank(rank)
             .build()
     }
 

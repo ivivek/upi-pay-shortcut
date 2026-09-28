@@ -3,7 +3,14 @@ package com.linetra.upishortcut.ui
 import android.content.ClipboardManager
 import android.content.Context
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +25,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,10 +48,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.linetra.upishortcut.MerchantColors
 import com.linetra.upishortcut.Screen
+import com.linetra.upishortcut.UpiAppInfo
 import com.linetra.upishortcut.UpiLink
 import com.linetra.upishortcut.data.Merchant
 
@@ -51,6 +66,7 @@ fun MerchantFormScreen(
     others: List<Merchant>,
     pinned: Boolean,
     pinSupported: Boolean,
+    upiApps: List<UpiAppInfo>,
     newColor: Int,
     onBack: () -> Unit,
     onSave: (Merchant, pin: Boolean) -> Unit,
@@ -61,6 +77,8 @@ fun MerchantFormScreen(
     var name by rememberSaveable { mutableStateOf(editing?.name ?: "") }
     // Auto-fill the name from the link's payee name until the user types their own.
     var nameTouched by rememberSaveable { mutableStateOf(editing != null) }
+    var upiPackage by rememberSaveable { mutableStateOf(editing?.upiPackage) }
+    var color by rememberSaveable { mutableStateOf(editing?.color ?: newColor) }
     var confirmDelete by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -75,8 +93,8 @@ fun MerchantFormScreen(
 
     fun buildMerchant(v: UpiLink.Valid): Merchant {
         val finalName = name.trim().ifEmpty { v.payeeName ?: v.payee }
-        return editing?.copy(name = finalName, upiLink = v.link)
-            ?: Merchant(name = finalName, upiLink = v.link, color = newColor)
+        return editing?.copy(name = finalName, upiLink = v.link, upiPackage = upiPackage, color = color)
+            ?: Merchant(name = finalName, upiLink = v.link, upiPackage = upiPackage, color = color)
     }
 
     BackHandler(onBack = onBack)
@@ -132,6 +150,8 @@ fun MerchantFormScreen(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                UpiAppPicker(upiApps, upiPackage, onPick = { upiPackage = it })
+                ColorPicker(name, color, onPick = { color = it })
                 if (duplicate != null) {
                     WarningCard("This UPI ID is already saved as \"${duplicate.name}\".")
                 }
@@ -186,6 +206,57 @@ fun MerchantFormScreen(
             confirmButton = { TextButton(onClick = { confirmDelete = false; onDelete(editing) }) { Text("Delete") } },
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun UpiAppPicker(apps: List<UpiAppInfo>, selected: String?, onPick: (String?) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val label = when (selected) {
+        null -> "System default"
+        else -> apps.firstOrNull { it.packageName == selected }?.label ?: "$selected (not installed)"
+    }
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+        OutlinedTextField(
+            value = label,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Pay with") },
+            supportingText = { if (selected == null) Text("Your default UPI app, or Android asks each time") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(text = { Text("System default") }, onClick = { onPick(null); expanded = false })
+            for (app in apps) {
+                DropdownMenuItem(text = { Text(app.label) }, onClick = { onPick(app.packageName); expanded = false })
+            }
+        }
+    }
+}
+
+@Composable
+private fun ColorPicker(name: String, selected: Int, onPick: (Int) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Icon colour", style = MaterialTheme.typography.labelLarge)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            MerchantAvatar(name.ifBlank { "?" }, selected, size = 48.dp)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.weight(1f)) {
+                for (i in 0 until MerchantColors.count) {
+                    val ring = if (i == selected) BorderStroke(3.dp, MaterialTheme.colorScheme.onSurface) else null
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .aspectRatio(1f)
+                            .clip(CircleShape)
+                            .background(Color(MerchantColors.argb(i)))
+                            .then(if (ring != null) Modifier.border(ring, CircleShape) else Modifier)
+                            .clickable { onPick(i) },
+                    )
+                }
+            }
+        }
     }
 }
 

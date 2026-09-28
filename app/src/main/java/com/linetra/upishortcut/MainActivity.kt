@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         // The user may have accepted a pin prompt or removed an icon while we were away.
-        vm.refreshPinned()
+        vm.refresh()
     }
 }
 
@@ -79,6 +79,7 @@ private fun App(vm: MainViewModel) {
             others = merchants,
             pinned = screen.merchant?.let(vm::isPinned) ?: false,
             pinSupported = vm.pinSupported,
+            upiApps = vm.upiApps,
             newColor = vm.nextColor(),
             onBack = vm::back,
             onSave = vm::save,

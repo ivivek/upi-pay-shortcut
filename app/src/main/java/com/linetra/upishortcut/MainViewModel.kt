@@ -33,6 +33,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var screen by mutableStateOf<Screen>(Screen.List)
         private set
 
+    var upiApps by mutableStateOf(emptyList<UpiAppInfo>())
+        private set
+
     /** Shortcut ids currently pinned; read from the launcher, not stored, so removals show up. */
     var pinnedIds by mutableStateOf(emptySet<String>())
         private set
@@ -52,7 +55,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         context.deleteDatabase("merchants.db") // POC's database
     }
 
-    fun refreshPinned() {
+    /** Called on resume: pins, installed UPI apps and usage may all have changed while we were away. */
+    fun refresh() {
+        refreshPinned()
+        upiApps = UpiApps.installed(context)
+        viewModelScope.launch { publishDynamic() }
+    }
+
+    private suspend fun publishDynamic() {
+        Shortcuts.publishDynamic(context, dao.mostUsed(4), dao.all())
+    }
+
+    private fun refreshPinned() {
         pinnedIds = Shortcuts.pinnedIds(context)
     }
 
@@ -103,6 +117,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val saved = if (merchant.id == 0L) merchant.copy(id = dao.insert(merchant)) else merchant.also { dao.update(it) }
             Shortcuts.update(context, saved)
             if (pin) Shortcuts.requestPin(context, saved)
+            publishDynamic()
             screen = Screen.List
         }
     }
@@ -116,6 +131,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             dao.delete(merchant)
             Shortcuts.onDeleted(context, merchant.id)
             refreshPinned()
+            publishDynamic()
             screen = Screen.List
         }
     }
