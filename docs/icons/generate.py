@@ -130,7 +130,26 @@ def play_icon(geom, color, out):
     png = subprocess.run(["rsvg-convert", "-w", "512", "-h", "512"], input=svg.encode(),
                          capture_output=True, check=True).stdout
     # rsvg drops the alpha channel of an opaque image; Play wants 32-bit (RGBA).
-    subprocess.run(["convert", "png:-", f"PNG32:{out}"], input=png, check=True)
+    subprocess.run(["convert", "png:-", "-strip", f"PNG32:{out}"], input=png, check=True)
+
+
+def feature_graphic(geom, color, out):
+    """Google Play feature graphic: 1024x500, 24-bit PNG without alpha. Uses the Lato font."""
+    s = 5.2  # dp -> px for the artwork
+    cx, cy = 236, 250
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500">
+  <rect width="1024" height="500" fill="{color}"/>
+  <path transform="translate({cx - C * s},{cy - C * s}) scale({s})" d="{path_data(geom)}"
+        fill="#FFFFFF" fill-rule="evenodd"/>
+  <g font-family="Lato" fill="#FFFFFF">
+    <text x="440" y="228" font-size="70" font-weight="900">UPI Shortcuts</text>
+    <text x="442" y="292" font-size="28" fill="#CDE6E2">Scan a shop's QR code once.</text>
+    <text x="442" y="332" font-size="28" fill="#CDE6E2">Pay it from your home screen in one tap.</text>
+  </g>
+</svg>'''
+    png = subprocess.run(["rsvg-convert"], input=svg.encode(), capture_output=True, check=True).stdout
+    subprocess.run(["convert", "png:-", "-background", color, "-alpha", "remove", "-strip", f"PNG24:{out}"],
+                   input=png, check=True)
 
 
 OPTIONS = [
@@ -150,4 +169,6 @@ if __name__ == "__main__":
         (d / "ic_launcher_foreground.xml").write_text(VECTOR.format(comment=comment, path=path_data(geom)))
         (d / "colors.xml").write_text(COLORS.format(color=color))
         play_icon(geom, color, d / "ic_launcher-playstore.png")
+        if name == "option1-qr-bolt":  # the chosen icon
+            feature_graphic(geom, color, d / "feature-graphic.png")
         print(f"{name}: r={r:.1f}, {len(path_data(geom))} chars of path data")
