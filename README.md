@@ -71,3 +71,7 @@ Requirements: JDK 17+ and the Android SDK (compileSdk 36). `build.sh` defaults t
 
 - Package: `com.linetra.upishortcut`
 - Supports Android 8.0 (API 26) and later.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
