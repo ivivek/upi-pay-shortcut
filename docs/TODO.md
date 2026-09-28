@@ -56,3 +56,31 @@ Rebuilding the widget without Glance drops all three, leaving no user-facing per
 - Remove the `androidx.glance:glance-appwidget` dependency. Check with
   `aapt2 dump permissions app-debug.apk` that only the internal permission remains.
 - Bonus: a smaller APK, since Glance and WorkManager are dropped.
+
+## Fully offline QR scanning with zxing-cpp
+
+v1 scans with Google's code scanner (camera) and ML Kit (images), both running in Play services.
+The app itself sends nothing, but Play services sends Google usage and diagnostic data about the
+scanner (device model and OS, package name and version, a device identifier, performance and
+error codes; see https://developers.google.com/ml-kit/android-data-disclosure). So the privacy
+policy has to mention it and the Play Data safety form has to declare "App info and performance"
+and "Device or other IDs" for analytics. Replacing both with an open-source, on-device decoder
+means no data leaves the phone at all, and the app also works on phones without Play services.
+
+- Use zxing-cpp (`io.github.zxing-cpp:android`, Apache 2.0), not Java ZXing: ZXing is in
+  maintenance mode, while zxing-cpp is its actively developed C++ successor with an official
+  Android wrapper, and is faster and better at small and damaged codes. Other apps moving off
+  Play services are switching to it (e.g. bisq-mobile, KScan).
+- Camera: our own Compose scanner screen with CameraX `ImageAnalysis` feeding zxing-cpp's
+  `BarcodeReader`, with a viewfinder, torch toggle and "load from image" fallback.
+- Images (picker and share): decode with the same reader; keep `QrScanner.decodeImage`'s signature
+  so callers don't change.
+- Remove `play-services-code-scanner`, `play-services-mlkit-barcode-scanning` and the
+  `com.google.mlkit.vision.DEPENDENCIES` manifest entry.
+- Trade-off: the app gains the `CAMERA` permission (asked the first time the user taps Scan;
+  loading from an image still needs none). This works against "Zero permissions" above, but
+  camera is a runtime permission users grant knowingly, unlike the WorkManager ones.
+- zxing-cpp is native code, adding roughly 1 MB per ABI; app bundles ship only the device's ABI,
+  and dropping the Play services libraries offsets some of it.
+- After switching: update `PRIVACY.md` (scanning section), the Data safety form (no data
+  collected) and the store listing.
