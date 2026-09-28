@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- QR-scan corner brackets around a rupee sign, inside the 66dp adaptive-icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M30,40 V30 H40 M68,30 H78 V40 M78,68 V78 H68 M40,78 H30 V68" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M42,36 H66 V41 H42 Z M42,45 H66 V50 H42 Z M42,36 H51 C59,36 63,42 63,48 C63,55 57,59 50,59 H47 L62,74 H55 L40,59 V54 H50 C54,54 57,51 57,48 C57,44 54,41 50,41 H42 Z" />
+</vector>
