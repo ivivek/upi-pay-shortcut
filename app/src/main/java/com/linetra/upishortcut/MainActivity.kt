@@ -23,6 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.linetra.upishortcut.ui.AppTheme
 import com.linetra.upishortcut.ui.MerchantFormScreen
 import com.linetra.upishortcut.ui.MerchantListScreen
+import com.linetra.upishortcut.ui.RiskDialog
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -70,6 +71,7 @@ private fun App(vm: MainViewModel) {
             vm.messageShown()
         }
     }
+    if (!vm.riskAccepted) RiskDialog(onAccept = vm::acceptRisk)
     vm.leftoverIcon?.let { name ->
         AlertDialog(
             onDismissRequest = vm::leftoverIconShown,

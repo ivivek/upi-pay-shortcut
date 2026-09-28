@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.IntentCompat
+import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.linetra.upishortcut.data.Merchant
@@ -53,6 +54,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun messageShown() {
         message = null
+    }
+
+    private val prefs = context.getSharedPreferences("settings", Application.MODE_PRIVATE)
+
+    /** Whether the user accepted the one-time "saved QR codes can go stale" warning. */
+    var riskAccepted by mutableStateOf(prefs.getBoolean(KEY_RISK_ACCEPTED, false))
+        private set
+
+    fun acceptRisk() {
+        prefs.edit { putBoolean(KEY_RISK_ACCEPTED, true) }
+        riskAccepted = true
     }
 
     /** Name of a just-deleted merchant whose home-screen icon the user must remove by hand. */
@@ -199,5 +211,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 e.message
             }
         }
+    }
+
+    private companion object {
+        const val KEY_RISK_ACCEPTED = "risk_accepted"
     }
 }
