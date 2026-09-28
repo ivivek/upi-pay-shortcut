@@ -196,13 +196,7 @@ fun MerchantFormScreen(
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
             title = { Text("Delete ${editing.name}?") },
-            text = {
-                Text(
-                    if (pinned) "Its home-screen icon will stop working (Android doesn't let apps remove it). " +
-                        "Long-press the icon to remove it."
-                    else "This can't be undone."
-                )
-            },
+            text = { Text("This can't be undone.") },
             confirmButton = { TextButton(onClick = { confirmDelete = false; onDelete(editing) }) { Text("Delete") } },
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
         )

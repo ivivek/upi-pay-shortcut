@@ -55,6 +55,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         message = null
     }
 
+    /** Name of a just-deleted merchant whose home-screen icon the user must remove by hand. */
+    var leftoverIcon by mutableStateOf<String?>(null)
+        private set
+
+    fun leftoverIconShown() {
+        leftoverIcon = null
+    }
+
     init {
         Shortcuts.disableLegacy(context)
         context.deleteDatabase("merchants.db") // POC's database
@@ -138,9 +146,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun delete(merchant: Merchant) {
+        val wasPinned = isPinned(merchant)
         viewModelScope.launch {
             dao.delete(merchant)
             Shortcuts.onDeleted(context, merchant.id)
+            // Android doesn't let apps remove pinned icons, so tell the user to do it.
+            if (wasPinned) leftoverIcon = merchant.name
             refreshPinned()
             merchantsChanged()
             screen = Screen.List

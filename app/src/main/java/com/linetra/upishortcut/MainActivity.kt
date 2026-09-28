@@ -9,7 +9,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -66,6 +69,20 @@ private fun App(vm: MainViewModel) {
             snackbar.showSnackbar(it)
             vm.messageShown()
         }
+    }
+    vm.leftoverIcon?.let { name ->
+        AlertDialog(
+            onDismissRequest = vm::leftoverIconShown,
+            title = { Text("Remove the home-screen icon") },
+            text = {
+                Text(
+                    "\"$name\" is deleted, but its icon is still on your home screen. " +
+                        "Android doesn't let apps remove icons, so please remove it yourself: " +
+                        "long-press the icon and choose Remove."
+                )
+            },
+            confirmButton = { TextButton(onClick = vm::leftoverIconShown) { Text("OK") } },
+        )
     }
     when (val screen = vm.screen) {
         Screen.List -> MerchantListScreen(
