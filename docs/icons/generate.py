@@ -1,4 +1,4 @@
-"""Generate the launcher-icon prototypes in docs/icons/ (see docs/icon-options.md).
+"""Generate the launcher-icon prototypes in docs/icons/.
 
 Each foreground is one flat white shape with real cut-outs (no overlapping colours), so the same
 drawable works as the adaptive icon's monochrome layer. Coordinates are on the 108dp canvas and
