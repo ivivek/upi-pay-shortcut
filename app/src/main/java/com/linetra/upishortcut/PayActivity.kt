@@ -1,6 +1,7 @@
 package com.linetra.upishortcut
 
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Process
@@ -11,6 +12,7 @@ import androidx.activity.ComponentActivity
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
+import com.linetra.upishortcut.widget.MerchantWidget
 import kotlinx.coroutines.launch
 
 /**
@@ -32,7 +34,10 @@ class PayActivity : ComponentActivity() {
             } else {
                 launchUpi(merchant.upiLink, merchant.upiPackage)
                 ShortcutManagerCompat.reportShortcutUsed(this@PayActivity, Shortcuts.id(merchant.id))
-                app.scope.launch { app.db.merchantDao().recordUse(merchant.id, System.currentTimeMillis()) }
+                app.scope.launch {
+                    app.db.merchantDao().recordUse(merchant.id, System.currentTimeMillis())
+                    MerchantWidget.refresh(app) // widget orders merchants by use
+                }
             }
             Log.i(
                 TAG,
@@ -63,5 +68,12 @@ class PayActivity : ComponentActivity() {
     companion object {
         private const val TAG = "UpiShortcut"
         const val EXTRA_MERCHANT_ID = "merchant_id"
+
+        /** Intent used by home-screen shortcuts and the widget. */
+        fun intent(context: Context, merchantId: Long): Intent =
+            Intent(context, PayActivity::class.java).apply {
+                action = Intent.ACTION_VIEW // shortcut intents must have an action
+                putExtra(EXTRA_MERCHANT_ID, merchantId)
+            }
     }
 }

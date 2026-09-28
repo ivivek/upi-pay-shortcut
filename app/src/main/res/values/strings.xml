@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">UPI Shortcuts</string>
+    <string name="widget_name">UPI merchants</string>
+    <string name="widget_description">Tap a merchant to open its UPI payment screen</string>
 </resources>

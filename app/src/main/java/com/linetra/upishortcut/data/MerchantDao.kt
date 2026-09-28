@@ -19,6 +19,10 @@ interface MerchantDao {
     @Query("SELECT * FROM merchants WHERE id = :id")
     suspend fun get(id: Long): Merchant?
 
+    /** Widget order: most used first, then alphabetical. */
+    @Query("SELECT * FROM merchants ORDER BY useCount DESC, name COLLATE NOCASE")
+    suspend fun byUse(): List<Merchant>
+
     @Query("SELECT * FROM merchants WHERE useCount > 0 ORDER BY useCount DESC, lastUsedAt DESC LIMIT :limit")
     suspend fun mostUsed(limit: Int): List<Merchant>
 

@@ -56,6 +56,8 @@ dependencies {
     implementation("androidx.room:room-ktx:2.8.3")
     ksp("androidx.room:room-compiler:2.8.3")
 
+    implementation("androidx.glance:glance-appwidget:1.1.1")
+
     // Scanner UI and QR decoding are served by Google Play services (no camera permission, small APK).
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     implementation("com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1")

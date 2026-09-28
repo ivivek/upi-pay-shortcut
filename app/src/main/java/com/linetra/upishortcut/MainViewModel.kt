@@ -10,10 +10,15 @@ import androidx.core.content.IntentCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.linetra.upishortcut.data.Merchant
+import com.linetra.upishortcut.widget.MerchantWidget
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONException
+import java.io.IOException
 
 sealed interface Screen {
     data object List : Screen
@@ -64,6 +69,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun publishDynamic() {
         Shortcuts.publishDynamic(context, dao.mostUsed(4), dao.all())
+    }
+
+    /** Everything outside the app that mirrors the merchant list. */
+    private suspend fun merchantsChanged() {
+        publishDynamic()
+        MerchantWidget.refresh(context)
     }
 
     private fun refreshPinned() {
@@ -117,7 +128,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val saved = if (merchant.id == 0L) merchant.copy(id = dao.insert(merchant)) else merchant.also { dao.update(it) }
             Shortcuts.update(context, saved)
             if (pin) Shortcuts.requestPin(context, saved)
-            publishDynamic()
+            merchantsChanged()
             screen = Screen.List
         }
     }
@@ -131,8 +142,51 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             dao.delete(merchant)
             Shortcuts.onDeleted(context, merchant.id)
             refreshPinned()
-            publishDynamic()
+            merchantsChanged()
             screen = Screen.List
+        }
+    }
+
+    fun exportTo(uri: Uri) {
+        viewModelScope.launch {
+            val merchants = dao.all()
+            message = try {
+                withContext(Dispatchers.IO) {
+                    context.contentResolver.openOutputStream(uri, "wt")!!.bufferedWriter().use { it.write(Backup.toJson(merchants)) }
+                }
+                "Exported ${merchants.size} merchants"
+            } catch (e: IOException) {
+                "Export failed: ${e.message}"
+            }
+        }
+    }
+
+    /** Adds merchants from an export, skipping links that are already saved. Doesn't pin anything. */
+    fun importFrom(uri: Uri) {
+        viewModelScope.launch {
+            message = try {
+                val text = withContext(Dispatchers.IO) {
+                    context.contentResolver.openInputStream(uri)!!.bufferedReader().use { it.readText() }
+                }
+                val incoming = Backup.fromJson(text)
+                val existing = dao.all().map { it.upiLink }.toMutableSet()
+                var added = 0
+                for (m in incoming) {
+                    if (existing.add(m.upiLink)) {
+                        dao.insert(m)
+                        added++
+                    }
+                }
+                merchantsChanged()
+                val skipped = incoming.size - added
+                "Imported $added merchants" + if (skipped > 0) " ($skipped already saved)" else ""
+            } catch (e: IOException) {
+                "Import failed: ${e.message}"
+            } catch (e: JSONException) {
+                "That file isn't a UPI Shortcuts export"
+            } catch (e: IllegalArgumentException) {
+                e.message
+            }
         }
     }
 }

@@ -76,15 +76,11 @@ object Shortcuts {
     }
 
     fun build(context: Context, merchant: Merchant, rank: Int = 0): ShortcutInfoCompat {
-        val intent = Intent(context, PayActivity::class.java).apply {
-            action = Intent.ACTION_VIEW // shortcut intents must have an action
-            putExtra(PayActivity.EXTRA_MERCHANT_ID, merchant.id)
-        }
         return ShortcutInfoCompat.Builder(context, id(merchant.id))
             .setShortLabel(merchant.name)
             .setLongLabel("Pay ${merchant.name}")
             .setIcon(IconCompat.createWithAdaptiveBitmap(letterIcon(context, merchant)))
-            .setIntent(intent)
+            .setIntent(PayActivity.intent(context, merchant.id))
             .setRank(rank)
             .build()
     }

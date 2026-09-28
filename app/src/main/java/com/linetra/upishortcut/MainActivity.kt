@@ -21,6 +21,7 @@ import com.linetra.upishortcut.ui.AppTheme
 import com.linetra.upishortcut.ui.MerchantFormScreen
 import com.linetra.upishortcut.ui.MerchantListScreen
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
 
@@ -54,6 +55,12 @@ private fun App(vm: MainViewModel) {
     val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let(vm::importImage)
     }
+    val exportFile = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        uri?.let(vm::exportTo)
+    }
+    val importFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let(vm::importFrom)
+    }
     LaunchedEffect(vm.message) {
         vm.message?.let {
             snackbar.showSnackbar(it)
@@ -73,6 +80,8 @@ private fun App(vm: MainViewModel) {
             onEnterLink = { vm.openNew() },
             onEdit = vm::openEdit,
             onPin = vm::pin,
+            onExport = { exportFile.launch("upi-shortcuts-${LocalDate.now()}.json") },
+            onImport = { importFile.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
         )
         is Screen.Form -> MerchantFormScreen(
             form = screen,
