@@ -1,9 +1,12 @@
 package com.linetra.upishortcut
 
 import android.app.Application
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.IntentCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.linetra.upishortcut.data.Merchant
@@ -36,6 +39,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val pinSupported = Shortcuts.isPinSupported(context)
 
+    /** One-off message for a snackbar (scan failures etc.). */
+    var message by mutableStateOf<String?>(null)
+        private set
+
+    fun messageShown() {
+        message = null
+    }
+
     init {
         Shortcuts.disableLegacy(context)
         context.deleteDatabase("merchants.db") // POC's database
@@ -53,6 +64,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun openEdit(merchant: Merchant) {
         screen = Screen.Form(merchant)
+    }
+
+    fun onScanResult(result: ScanResult) {
+        when (result) {
+            // Open the form even for non-UPI text so the user sees what was scanned and why it's rejected.
+            is ScanResult.Found -> openNew(UpiLink.find(result.text) ?: result.text)
+            is ScanResult.Failed -> message = result.message
+            ScanResult.Cancelled -> Unit
+        }
+    }
+
+    fun importImage(uri: Uri) {
+        viewModelScope.launch { onScanResult(QrScanner.decodeImage(context, uri)) }
+    }
+
+    /** Handles "Share to UPI Shortcuts" with either text containing a link or a QR image. */
+    fun handleShare(intent: Intent) {
+        if (intent.action != Intent.ACTION_SEND) return
+        val link = intent.getStringExtra(Intent.EXTRA_TEXT)?.let(UpiLink::find)
+        val image = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java)
+        when {
+            link != null -> openNew(link)
+            image != null -> importImage(image)
+            else -> message = "No UPI link found in what was shared"
+        }
     }
 
     fun back() {

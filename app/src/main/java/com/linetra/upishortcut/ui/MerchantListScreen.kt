@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
@@ -24,6 +23,10 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,9 +34,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.linetra.upishortcut.R
 import com.linetra.upishortcut.UpiLink
 import com.linetra.upishortcut.data.Merchant
 
@@ -43,24 +48,36 @@ fun MerchantListScreen(
     merchants: List<Merchant>,
     isPinned: (Merchant) -> Boolean,
     pinSupported: Boolean,
+    snackbar: SnackbarHostState,
+    onScan: () -> Unit,
+    onPickImage: () -> Unit,
     onEnterLink: () -> Unit,
     onEdit: (Merchant) -> Unit,
     onPin: (Merchant) -> Unit,
 ) {
     Scaffold(
         topBar = { TopAppBar(title = { Text("UPI Shortcuts") }) },
+        snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
             if (merchants.isNotEmpty()) {
-                ExtendedFloatingActionButton(
-                    onClick = onEnterLink,
-                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                    text = { Text("Enter link") },
-                )
+                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SmallFloatingActionButton(onClick = onEnterLink) {
+                        Icon(Icons.Default.Edit, contentDescription = "Enter UPI link")
+                    }
+                    SmallFloatingActionButton(onClick = onPickImage) {
+                        Icon(painterResource(R.drawable.ic_image), contentDescription = "Scan QR from image")
+                    }
+                    ExtendedFloatingActionButton(
+                        onClick = onScan,
+                        icon = { Icon(painterResource(R.drawable.ic_qr_scan), contentDescription = null) },
+                        text = { Text("Scan QR") },
+                    )
+                }
             }
         },
     ) { padding ->
         if (merchants.isEmpty()) {
-            EmptyState(Modifier.padding(padding), onEnterLink)
+            EmptyState(Modifier.padding(padding), onScan, onPickImage, onEnterLink)
         } else {
             LazyColumn(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
@@ -141,7 +158,7 @@ private fun MerchantRow(
 }
 
 @Composable
-private fun EmptyState(modifier: Modifier, onEnterLink: () -> Unit) {
+private fun EmptyState(modifier: Modifier, onScan: () -> Unit, onPickImage: () -> Unit, onEnterLink: () -> Unit) {
     Column(
         modifier.fillMaxSize().padding(32.dp),
         verticalArrangement = Arrangement.Center,
@@ -155,6 +172,12 @@ private fun EmptyState(modifier: Modifier, onEnterLink: () -> Unit) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.padding(top = 24.dp))
-        Button(onClick = onEnterLink, modifier = Modifier.fillMaxWidth()) { Text("Enter UPI link") }
+        Button(onClick = onScan, modifier = Modifier.fillMaxWidth()) {
+            Icon(painterResource(R.drawable.ic_qr_scan), contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("Scan QR code")
+        }
+        OutlinedButton(onClick = onPickImage, modifier = Modifier.fillMaxWidth()) { Text("Scan QR from image") }
+        TextButton(onClick = onEnterLink, modifier = Modifier.fillMaxWidth()) { Text("Enter UPI link") }
     }
 }
