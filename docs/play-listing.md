@@ -53,4 +53,6 @@ First release. Save a shop's UPI QR code and pay it from a home-screen icon in o
 - Privacy policy: https://github.com/ivivek/upi-pay-shortcut/blob/main/PRIVACY.md
 - App icon: `docs/icons/option1-qr-bolt/ic_launcher-playstore.png`
 - Feature graphic (1024×500): `docs/icons/option1-qr-bolt/feature-graphic.png`
-- Phone screenshots (2–8): to do
+- Phone screenshots (2–8): `docs/screenshots/1-home-screen.png`, `2-save-merchant.png`,
+  `3-merchant-list.png` (framed with `docs/screenshots/frame.py`)
+- Video: to do (see `docs/TODO.md`)

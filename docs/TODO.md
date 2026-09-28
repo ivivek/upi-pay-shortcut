@@ -57,6 +57,22 @@ Rebuilding the widget without Glance drops all three, leaving no user-facing per
   `aapt2 dump permissions app-debug.apk` that only the internal permission remains.
 - Bonus: a smaller APK, since Glance and WorkManager are dropped.
 
+## Promo video for the Play listing
+
+The listing's screenshots stop at the home screen; the app's real payoff is what happens on a tap.
+A short video (Play takes a YouTube link) showing tap on a shortcut → UPI app opening on the
+payment screen would have the most impact.
+
+- 15–30 s screen recording: home screen with pinned merchants, tap one, the UPI app opens on
+  that merchant's payment screen. Optionally the widget and the long-press menu too.
+- Needs a real merchant QR for the UPI app to show its payment screen (the `@examplebank`
+  dummies are rejected), so hide the merchant's name and UPI ID and stop before the amount or
+  any account details appear, or blur them.
+- Keep the UPI app on screen only briefly and don't feature its branding: the listing mustn't
+  look affiliated with any UPI app.
+- Upload to YouTube (public or unlisted, ads off), then add the URL under Main store listing →
+  Video.
+
 ## Fully offline QR scanning with zxing-cpp
 
 v1 scans with Google's code scanner (camera) and ML Kit (images), both running in Play services.
