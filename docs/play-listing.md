@@ -34,6 +34,7 @@ PRIVATE BY DESIGN
 • No account, no ads, no tracking
 • The app has no internet access, so your saved merchants never leave your phone
 • QR scanning is done on your phone by Google Play services
+• Open source (MIT licence): github.com/ivivek/upi-pay-shortcut
 
 GOOD TO KNOW
 • Payments are made in your own UPI app. This app only opens it with the saved payment details, and never sees your bank account, PIN or payment result.
