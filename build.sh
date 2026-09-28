@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Build script for UPI Pay Shortcut POC
-# Usage: ./build.sh [build|install|release|clean]
+# Usage: ./build.sh [build|install|release|install-release|bundle|test|androidTest|clean]
 
 set -e
 
@@ -50,7 +50,14 @@ case $ACTION in
         echo "Building release APK..."
         ./gradlew assembleRelease
         echo ""
-        echo "APK location: app/build/outputs/apk/release/app-release-unsigned.apk"
+        echo "APK location: app/build/outputs/apk/release/ (unsigned unless the upload key is set up)"
+        ;;
+    install-release)
+        echo "Building and installing release APK (R8, signed with the upload key)..."
+        ./gradlew installRelease
+        echo ""
+        echo "Launching app..."
+        adb shell am start -n com.linetra.upishortcut/.MainActivity
         ;;
     install)
         echo "Building and installing debug APK..."
@@ -78,12 +85,13 @@ case $ACTION in
         echo "Bundle location: app/build/outputs/bundle/release/app-release.aab"
         ;;
     *)
-        echo "Usage: $0 [build|install|release|clean|bundle|test|androidTest]"
+        echo "Usage: $0 [build|install|release|install-release|clean|bundle|test|androidTest]"
         echo ""
         echo "Commands:"
         echo "  build        - Build debug APK (default)"
         echo "  install      - Build, install to device, and launch"
         echo "  release      - Build release APK"
+        echo "  install-release - Build, install and launch the release APK (needs the upload key)"
         echo "  bundle       - Build release AAB bundle"
         echo "  test         - Run JVM unit tests"
         echo "  androidTest  - Run instrumented tests in their own package"

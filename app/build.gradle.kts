@@ -14,12 +14,34 @@ android {
         minSdk = 26 // pinned shortcuts need Android 8.0+
         targetSdk = 36
         versionCode = 1
-        versionName = "0.2"
+        versionName = "1.0"
+    }
+
+    // Upload key for Play (Play App Signing holds the real signing key). The keystore and its
+    // passwords live outside the repo, in ~/.gradle/gradle.properties:
+    //   upishortcut.storeFile=/path/to/upload-keystore.jks
+    //   upishortcut.storePassword=...
+    //   upishortcut.keyAlias=upload
+    //   upishortcut.keyPassword=...
+    // Without them, release builds are unsigned.
+    val uploadStore = providers.gradleProperty("upishortcut.storeFile").orNull
+    signingConfigs {
+        if (uploadStore != null) {
+            create("upload") {
+                storeFile = file(uploadStore)
+                storePassword = providers.gradleProperty("upishortcut.storePassword").get()
+                keyAlias = providers.gradleProperty("upishortcut.keyAlias").get()
+                keyPassword = providers.gradleProperty("upishortcut.keyPassword").get()
+            }
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.findByName("upload")
         }
     }
 
