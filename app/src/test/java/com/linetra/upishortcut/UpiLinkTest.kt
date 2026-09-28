@@ -78,6 +78,19 @@ class UpiLinkTest {
     }
 
     @Test
+    fun scannedPayloadWithRawSpacesIsKeptWhole() {
+        // Regression: the QR payload was cut at "pn=Example", dropping mc/orgid/etc.
+        assertEquals(example, UpiLink.find(example))
+        assertEquals(example, UpiLink.find("  $example\n"))
+        assertEquals("5411", valid(UpiLink.find(example)!!).merchantCode)
+    }
+
+    @Test
+    fun linkWithSpacesInsideProseKeepsLaterParams() {
+        assertEquals(example, UpiLink.find("Our QR:\n$example\nThanks!"))
+    }
+
+    @Test
     fun malformedEscapeKeptRaw() {
         assertEquals("100%", valid("upi://pay?pa=s@ybl&tn=100%").params["tn"])
     }

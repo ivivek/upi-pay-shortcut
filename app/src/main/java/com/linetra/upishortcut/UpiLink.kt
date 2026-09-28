@@ -12,7 +12,9 @@ import java.net.URLDecoder
 object UpiLink {
 
     private val VPA = Regex("^[A-Za-z0-9._-]{1,256}@[A-Za-z][A-Za-z0-9.-]{1,64}$")
-    private val IN_TEXT = Regex("""upi://pay\?[^\s"'<>]+""", RegexOption.IGNORE_CASE)
+    // A space-separated chunk is still part of the link if it carries on with "&key=…"
+    // (e.g. "pn=Example Services&tn=…"); otherwise it's surrounding prose.
+    private val IN_TEXT = Regex("""upi://pay\?[^\s"'<>]+(?: [^\s"'<>&]*&[^\s"'<>]*)*""", RegexOption.IGNORE_CASE)
 
     enum class Warning {
         /** `am` is set: likely a QR printed for one bill. */
@@ -40,8 +42,15 @@ object UpiLink {
     fun normalize(input: String): String =
         input.trim().replace("\r", "").replace("\n", "").replace(" ", "%20")
 
-    /** Finds the first `upi://pay?...` link inside arbitrary shared text. */
-    fun find(text: String): String? = IN_TEXT.find(text)?.value
+    /**
+     * Finds the `upi://pay?...` link in scanned or shared text. When the whole text is one link
+     * (always the case for a QR payload) it is taken as-is, since values like `pn` may hold raw spaces.
+     */
+    fun find(text: String): String? {
+        val trimmed = text.trim()
+        if (trimmed.startsWith("upi://pay", ignoreCase = true) && '\n' !in trimmed) return trimmed
+        return IN_TEXT.find(text)?.value
+    }
 
     fun parse(input: String): Result {
         val link = normalize(input)
